@@ -1,53 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getMovieByKeyWord } from 'api/getMovies';
+import { Container, Input } from 'components/Movies/Movies.styled';
 
 export default function Movies() {
-  const [movies, setMovies] = useState([]);
-
+  const [movies, setMovies] = useState(null);
+  const [error, setError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = searchParams.get('query') ?? '';
+  const query = searchParams.get('query');
   const location = useLocation();
 
   useEffect(() => {
-    if (query === '') {
+    if (query === null || query === '') {
       return;
     }
-    getMovieByKeyWord(query).then(({ results }) => {
-      if (results) {
-        setMovies(results);
-      }
-    });
+    getMovieByKeyWord(query)
+      .then(({ results }) => {
+        if (results) {
+          setMovies(results);
+        }
+      })
+      .catch(error => {
+        setError(error);
+      });
   }, [query]);
 
   const handleSubmit = evt => {
     evt.preventDefault();
     const form = evt.currentTarget;
-    // if (form.elements.searchMovie.value = '') {
-    //   return setSearchParams({});
-    // } 
-    setSearchParams({ query: form.elements.searchMovie.value });
-    
+    form.elements.searchMovie.value.trim()
+      ? setSearchParams({ query: form.elements.searchMovie.value.trim() })
+      : setSearchParams({});
+
     form.reset();
   };
 
   return (
-    <div>
+    <Container>
       <form onSubmit={handleSubmit}>
-        <input type="text" name="searchMovie" />
+        <Input type="text" name="searchMovie" />
         <button type="submit">Search</button>
       </form>
+      {movies && movies.length === 0 && <p>Nothing found for your request</p>}
       <ul>
-        {movies.map(({ id, title }) => {
-          return (
-            <li key={id}>
-              <Link to={`${id}`} state={{ from: location }}>
-                {title}
-              </Link>
-            </li>
-          );
-        })}
+        {movies &&
+          movies.map(({ id, title }) => {
+            return (
+              <li key={id}>
+                <Link to={`${id}`} state={{ from: location }}>
+                  {title}
+                </Link>
+              </li>
+            );
+          })}
       </ul>
-    </div>
+      {error && <p>Oops, something goes wrong</p>}
+    </Container>
   );
 }

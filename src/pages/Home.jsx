@@ -4,14 +4,19 @@ import { Link, useLocation } from 'react-router-dom';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
+  const [error, setError] = useState('');
   const location = useLocation();
 
   useEffect(() => {
-    getTrendingMovie().then(({ results }) => {
-      if (results) {
-        setMovies(results);
-      } 
-    });
+    getTrendingMovie()
+      .then(({ results }) => {
+        if (results) {
+          setMovies(results);
+        }
+      })
+      .catch(error => {
+        setError(error);
+      });
   }, []);
 
   return (
@@ -20,10 +25,13 @@ export default function Home() {
       <ul>
         {movies.map(({ id, title }) => (
           <li key={id}>
-            <Link to={`${id}`} state={{from:location}}>{title}</Link>
+            <Link to={`movies/${id}`} state={{ from: location }}>
+              {title}
+            </Link>
           </li>
         ))}
       </ul>
+      {error && <p>Oops, something goes wrong</p>}
     </>
   );
 }
